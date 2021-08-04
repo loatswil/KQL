@@ -1,0 +1,13 @@
+// Join example from MS
+// https://docs.microsoft.com/en-us/azure/data-explorer/kusto/query/samples?&pivots=azuremonitor#joins
+SecurityEvent 
+| where EventID == 4624		// sign-in events
+| project Computer, Account, TargetLogonId, LogonTime=TimeGenerated
+| join kind= inner (
+    SecurityEvent 
+    | where EventID == 4634		// sign-out events
+    | project TargetLogonId, LogoffTime=TimeGenerated
+) on TargetLogonId
+| extend Duration = LogoffTime-LogonTime
+| project-away TargetLogonId1 
+| top 10 by Duration desc
